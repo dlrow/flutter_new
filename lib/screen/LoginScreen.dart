@@ -98,7 +98,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                Padding(
+                /*Padding(
                   padding: EdgeInsets.only(top: 30),
                   child: Center(
                     child: RichText(
@@ -124,7 +124,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                )
+                )*/
               ],
             ),
           ),
