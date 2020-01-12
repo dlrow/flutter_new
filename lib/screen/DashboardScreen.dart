@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/model/Person.dart';
 import 'package:flutter_app/util/Constants.dart';
+import 'package:provider/provider.dart';
 import '../model/Task.dart';
 import '../model/Tasks.dart';
 
-class DashboardScreen extends StatelessWidget with Constants{
+class DashboardScreen extends StatelessWidget {
+  static const routeName = '/dashboard';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(TASK_SCREEN_APP_BAR_TITLE),),
+      appBar: AppBar(title: Text(Constants.TASK_SCREEN_APP_BAR_TITLE),),
       body: Stack(
         children: <Widget>[background, content],
       ),
@@ -35,10 +39,13 @@ class DashboardScreen extends StatelessWidget with Constants{
 
   get header => ListTile(
     contentPadding: EdgeInsets.only(left: 20, right: 20, top: 20),
-    title: Text(
+    title:  Consumer<Person>(
+        builder: (ctx, person, _) =>
+            Text(
       //hello username
-      'Hello Username',
+      'Hello '+person.name ,
       style: TextStyle(color: Colors.white),
+      )
     ),
 
     trailing: CircleAvatar(),

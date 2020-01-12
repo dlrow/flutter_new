@@ -1,7 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/model/Person.dart';
 import 'package:flutter_app/util/Constants.dart';
+import 'package:provider/provider.dart';
+import '../model/HttpException.dart';
 
-class LoginScreen extends StatelessWidget with Constants {
+enum AuthMode { Signup, Login }
+
+class LoginScreen extends StatefulWidget{
+  static const routeName = '/login';
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+
+}
+
+
+class _LoginScreenState extends State<LoginScreen> with Constants {
+
+  final _phoneController = TextEditingController();
+  final _pinController = TextEditingController();
+  var _isLoading = false;
+
+  AuthMode _authMode = AuthMode.Login;
+
+  Map<String, String> _authData = {
+    'phone': '',
+    'pin': '',
+  };
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('An Error Occurred!'),
+        content: Text(message),
+
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Okay'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    /*if (!_formKey.currentState.validate()) {
+      // Invalid!
+      return;
+    }
+    _formKey.currentState.save();
+*/
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (_authMode == AuthMode.Login) {
+        // Log user in
+        await Provider.of<Person>(context, listen: false).login(
+         _phoneController.text,_pinController.text
+        );
+      } else {
+        // Sign user up
+       /* await Provider.of<Person>(context, listen: false).signup(
+          _authData['phone'],
+          _authData['pin'],
+        );*/
+      }
+    } on HttpException catch (error) {
+      var errorMessage = 'Authentication failed';
+      if (error.toString().contains('EMAIL_EXISTS')) {
+        errorMessage = 'This email address is already in use.';
+      } else if (error.toString().contains('INVALID_EMAIL')) {
+        errorMessage = 'This is not a valid email address';
+      } else if (error.toString().contains('WEAK_PASSWORD')) {
+        errorMessage = 'This password is too weak.';
+      } else if (error.toString().contains('EMAIL_NOT_FOUND')) {
+        errorMessage = 'Could not find a user with that email.';
+      } else if (error.toString().contains('INVALID_PASSWORD')) {
+        errorMessage = 'Invalid password.';
+      }
+      _showErrorDialog(errorMessage);
+    } catch (error) {
+      const errorMessage =
+          'Could not authenticate you. Please try again later.';
+      _showErrorDialog(errorMessage);
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void _switchAuthMode() {
+    if (_authMode == AuthMode.Login) {
+      setState(() {
+        _authMode = AuthMode.Signup;
+      });
+    } else {
+      setState(() {
+        _authMode = AuthMode.Login;
+      });
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,8 +150,10 @@ class LoginScreen extends StatelessWidget with Constants {
   get phoneNumField => Padding(
     padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
     child: Container(
+
       color: Color(0xfff5f5f5),
       child: TextFormField(
+        controller: _phoneController,
         keyboardType: TextInputType.number,
         style: TextStyle(
             color: Colors.black, fontFamily: 'SFUIDisplay'),
@@ -53,6 +162,13 @@ class LoginScreen extends StatelessWidget with Constants {
             labelText: 'Phone',
             prefixIcon: Icon(Icons.person_outline),
             labelStyle: TextStyle(fontSize: 15)),
+        validator: (value) {
+          if (value.isEmpty || value.length<10) {
+            return 'Invalid phone!';
+          }
+          return null;
+        },
+
       ),
     ),
   );
@@ -60,6 +176,7 @@ class LoginScreen extends StatelessWidget with Constants {
   get pinField =>Container(
     color: Color(0xfff5f5f5),
     child: TextFormField(
+      controller: _pinController,
       obscureText: true,
       keyboardType: TextInputType.number,
       style:
@@ -69,13 +186,20 @@ class LoginScreen extends StatelessWidget with Constants {
           labelText: 'pin',
           prefixIcon: Icon(Icons.lock_outline),
           labelStyle: TextStyle(fontSize: 15)),
+      validator: (value) {
+        if (value.isEmpty || value.length<40) {
+          return 'Invalid pin!';
+        }
+        return null;
+      },
+
     ),
   );
 
   get signInButton => Padding(
     padding: EdgeInsets.only(top: 20),
     child: MaterialButton(
-      onPressed: () {}, //since this is only a UI app
+      onPressed: _submit, //since this is only a UI app
       child: Text(
         'SIGN IN',
         style: TextStyle(
